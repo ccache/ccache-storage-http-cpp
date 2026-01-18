@@ -1,0 +1,12 @@
+[requires]
+libcurl/8.11.1
+libuv/1.49.2
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[options]
+
+[layout]
+cmake_layout

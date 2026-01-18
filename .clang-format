@@ -1,0 +1,46 @@
+# This configuration should work with Clang-Format 18 and higher.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+AlignArrayOfStructures: Left
+AllowAllConstructorInitializersOnNextLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakBeforeMultilineStrings: true
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterStruct: true
+  AfterUnion: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+ColumnLimit: 100
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Relative headers
+  - Regex: '^"'
+    Priority: 1
+  # Dependency headers:
+  - Regex: '^<(uv\.h|curl/curl\.h)>$'
+    Priority: 3
+  # System headers:
+  - Regex: '\.h.*>$'
+    Priority: 4
+  # C++ headers:
+  - Regex: '^<'
+    Priority: 5
+IndentPPDirectives: AfterHash
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+PackConstructorInitializers: Never
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: false
+Standard: c++17

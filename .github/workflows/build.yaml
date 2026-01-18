@@ -1,8 +1,33 @@
 name: Build
 
-on: [push]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
-  noop:
+  build:
     runs-on: ubuntu-24.04
+
     steps:
-      - run: echo "Actions enabled"
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libuv1-dev cmake build-essential
+
+    - name: Configure
+      run: cmake -B build -D CMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Install
+      run: sudo cmake --install build
+
+    - name: Verify installation
+      run: |
+        test -f /usr/local/bin/ccache-storage-http
+        test -L /usr/local/bin/ccache-storage-https
