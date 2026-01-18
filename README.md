@@ -16,12 +16,12 @@ This project aims to:
    Feel free to use it as a starting point for implementing helpers for other
    storage service protocols.
 
-See also the similar [ccache-remote-http-go] project for an example (and
+See also the similar [ccache-storage-http-go] project for an example (and
 production ready) **Go** implementation.
 
 [ccache]: https://ccache.dev
 [ccache remote storage helper protocol]: https://github.com/jrosdahl/ccache/blob/crsh/doc/remote_storage_helper_spec.md
-[ccache-remote-http-go]: https://github.com/ccache/ccache-storage-http-go
+[ccache-storage-http-go]: https://github.com/ccache/ccache-storage-http-go
 
 ## Features
 
