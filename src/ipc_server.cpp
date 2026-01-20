@@ -111,10 +111,7 @@ bool IpcServer::init()
 void IpcServer::stop()
 {
   LOG("Shutting down");
-#ifndef _WIN32
-  unlink(_config.ipc_endpoint.c_str());
-#endif
-  uv_stop(&_loop);
+  uv_stop(&_loop); // unlinks the socket as well
 }
 
 void IpcServer::reset_idle_timer()
