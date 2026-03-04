@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: MIT
 // Copyright 2026 Joel Rosdahl
 
 #include "ipc_server.hpp"
