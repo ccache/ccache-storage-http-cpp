@@ -17,6 +17,8 @@ if(NOT libuv_FOUND)
   pkg_check_modules(LIBUV REQUIRED IMPORTED_TARGET libuv)
 endif()
 
+configure_file(src/version.hpp.in version.hpp)
+
 set(
   SOURCES
   src/config.cpp
@@ -27,6 +29,7 @@ set(
 )
 
 add_executable(ccache-storage-http ${SOURCES})
+target_include_directories(ccache-storage-http PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if(TARGET CURL::libcurl)
   target_link_libraries(ccache-storage-http PRIVATE CURL::libcurl)

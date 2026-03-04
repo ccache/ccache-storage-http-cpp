@@ -1,0 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright 2026 Joel Rosdahl
+
+#pragma once
+
+#define PROJECT_VERSION "@PROJECT_VERSION@"

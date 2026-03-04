@@ -5,6 +5,7 @@
 #include "ipc_server.hpp"
 #include "logger.hpp"
 #include "storage_client.hpp"
+#include "version.hpp"
 
 #include <uv.h>
 
@@ -16,7 +17,7 @@ static constexpr auto USAGE =
   "when needed. More information here: https://ccache.dev/storage-helpers.html\n"
   "\n"
   "Project: https://github.com/ccache/ccache-storage-http-cpp\n"
-  "Version: 0.1\n";
+  "Version: " PROJECT_VERSION "\n";
 
 int main()
 {
