@@ -7,7 +7,32 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-meson:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libuv1-dev meson ninja-build
+
+    - name: Configure
+      run: meson setup --buildtype release build
+
+    - name: Build
+      run: meson compile -C build
+
+    - name: Install
+      run: sudo meson install -C build
+
+    - name: Verify installation
+      run: |
+        test -f /usr/local/bin/ccache-storage-http
+        test -L /usr/local/bin/ccache-storage-https
+
+  build-cmake:
     runs-on: ubuntu-24.04
 
     steps:
