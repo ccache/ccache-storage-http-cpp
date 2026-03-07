@@ -8,6 +8,7 @@
 #include <charconv>
 #include <cstdlib>
 #include <sstream>
+#include <string_view>
 
 template<typename T> std::optional<T> parse_int(std::string_view str, int base = 10)
 {

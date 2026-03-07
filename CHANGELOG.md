@@ -9,6 +9,7 @@
 ### Changed
 
 - Rename project to `ccache-storage-http-cpp` for clarity.
+- Correct `<string_view>` includes.
 
 ## [0.2] - 2026-03-05
 

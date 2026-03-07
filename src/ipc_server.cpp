@@ -9,7 +9,6 @@
 #include <cstring>
 #include <iomanip>
 #include <sstream>
-#include <string_view>
 
 #ifndef _WIN32
 #  include <sys/stat.h>
