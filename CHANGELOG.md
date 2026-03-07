@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Source release archives.
+
 ## [0.2] - 2026-03-05
 
 ### Added

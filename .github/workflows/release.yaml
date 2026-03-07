@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Create source archives
+      run: |
+        VERSION="${GITHUB_REF_NAME#v}"
+        ARCHIVE_NAME="ccache-storage-http-cpp-${VERSION}"
+        git archive --format=tar --prefix="${ARCHIVE_NAME}/" HEAD | xz -9 > "${ARCHIVE_NAME}.tar.xz"
+        git archive --format=zip --prefix="${ARCHIVE_NAME}/" HEAD > "${ARCHIVE_NAME}.zip"
+        echo "ARCHIVE_NAME=${ARCHIVE_NAME}" >> "${GITHUB_ENV}"
+        echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
+
+    - name: Create release
+      run: |
+        NOTES=$(awk -v ver="## [${VERSION}]" 'index($0, ver) == 1{found=1; next} found && /^## \[/{exit} found{print}' CHANGELOG.md)
+        gh release create "${GITHUB_REF_NAME}" \
+          --title "${VERSION}" \
+          --notes "${NOTES}" \
+          "${ARCHIVE_NAME}.tar.xz" \
+          "${ARCHIVE_NAME}.zip"
+      env:
+        GH_TOKEN: ${{ github.token }}
