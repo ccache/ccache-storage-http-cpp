@@ -4,6 +4,7 @@
 #include "storage_client.hpp"
 
 #include "logger.hpp"
+#include "version.hpp"
 
 #include <cstring>
 #include <sstream>
@@ -217,6 +218,7 @@ CURL* StorageClient::create_easy_handle(HttpRequest* request)
 
   curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, request->error_buf);
   curl_easy_setopt(handle, CURLOPT_EXPECT_100_TIMEOUT_MS, 0L);
+  curl_easy_setopt(handle, CURLOPT_USERAGENT, "ccache-storage-http-cpp/" PROJECT_VERSION);
   curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1L);
   curl_easy_setopt(handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
   curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 5L);

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Set `User-Agent` header to `ccache-storage-http-cpp/$VERSION` in HTTP requests.
+
 ## [0.3] - 2026-03-07
 
 ### Added
