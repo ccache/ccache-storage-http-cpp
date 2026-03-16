@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- tar.gz release archive.
+
 ## [0.4] - 2026-03-15
 
 ### Changed
