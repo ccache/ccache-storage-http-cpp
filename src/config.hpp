@@ -29,6 +29,8 @@ struct Config
   std::optional<std::string> bearer_token;
   UrlLayout layout = UrlLayout::SUBDIRS;
   std::vector<std::pair<std::string, std::string>> headers;
+  bool use_netrc = false;
+  std::optional<std::string> netrc_file;
 };
 
 std::optional<Config> parse_config();

@@ -104,6 +104,11 @@ std::optional<Config> parse_config()
         std::string header_value = value_str.substr(eq_pos + 1);
         config.headers.emplace_back(header_name, header_value);
       }
+    } else if (key_str == "use-netrc") {
+      config.use_netrc = (value_str == "true");
+    } else if (key_str == "netrc-file") {
+      config.use_netrc = true;
+      config.netrc_file = value_str;
     }
   }
 

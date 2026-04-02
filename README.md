@@ -109,15 +109,24 @@ The helper supports the following custom attributes:
 
 - `@bearer-token`: Bearer token for `Authorization` header
 - `@header`: Custom HTTP headers (can be specified multiple times)
+- `@use-netrc`: Enable [netrc](https://everything.curl.dev/usingcurl/netrc.html) authentication
+- `@netrc-file`: Path to custom [netrc](https://everything.curl.dev/usingcurl/netrc.html) file (implies `@use-netrc`)
 - `@layout`: Storage layout mode
   - `subdirs` (default): First 2 hex chars as subdirectory
   - `flat`: All files in root directory
   - `bazel`: Bazel Remote Execution API compatible layout
 
-Example:
+Examples:
 
 ```bash
+# Custom header
 export CCACHE_REMOTE_STORAGE="https://cache.example.com @header=Content-Type=application/octet-stream"
+
+# Using netrc authentication (reads from ~/.netrc). @use-netrc is equal @use-netrc=true
+export CCACHE_REMOTE_STORAGE="https://cache.example.com @use-netrc"
+
+# Using custom netrc file
+export CCACHE_REMOTE_STORAGE="https://cache.example.com @netrc-file=/path/to/my-netrc"
 ```
 
 ## Optional debug logging
