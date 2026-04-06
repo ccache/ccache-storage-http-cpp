@@ -229,6 +229,13 @@ CURL* StorageClient::create_easy_handle(HttpRequest* request)
   curl_easy_setopt(handle, CURLOPT_WRITEDATA, request);
   curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
 
+  if (_config.use_netrc) {
+    curl_easy_setopt(handle, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+    if (_config.netrc_file) {
+      curl_easy_setopt(handle, CURLOPT_NETRC_FILE, _config.netrc_file->c_str());
+    }
+  }
+
   curl_slist* headers = nullptr;
 
   if (_config.bearer_token) {
