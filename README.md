@@ -122,10 +122,10 @@ Examples:
 # Custom header
 export CCACHE_REMOTE_STORAGE="https://cache.example.com @header=Content-Type=application/octet-stream"
 
-# Using netrc authentication (reads from ~/.netrc). @use-netrc is equal @use-netrc=true
+# Netrc authentication
 export CCACHE_REMOTE_STORAGE="https://cache.example.com @use-netrc"
 
-# Using custom netrc file
+# Custom netrc file
 export CCACHE_REMOTE_STORAGE="https://cache.example.com @netrc-file=/path/to/my-netrc"
 ```
 
