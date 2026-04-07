@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Support for [netrc](https://everything.curl.dev/usingcurl/netrc.html)
+  authentication.
+
 ## [0.5] - 2026-03-18
 
 ### Added
