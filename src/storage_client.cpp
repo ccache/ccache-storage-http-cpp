@@ -229,6 +229,21 @@ CURL* StorageClient::create_easy_handle(HttpRequest* request)
   curl_easy_setopt(handle, CURLOPT_WRITEDATA, request);
   curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
 
+  CURLU *h = curl_url();
+  curl_url_set(h, CURLUPART_URL, request->url.c_str(), 0);
+  char *username = nullptr;
+  char *password = nullptr;
+  curl_url_get(h, CURLUPART_USER, &username, 0);
+  curl_url_get(h, CURLUPART_PASSWORD, &password, 0);
+  if (username || password) {
+    curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+    curl_easy_setopt(handle, CURLOPT_USERNAME, username);
+    curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
+  }
+  curl_free(username);
+  curl_free(password);
+  curl_url_cleanup(h);
+
   if (_config.use_netrc) {
     curl_easy_setopt(handle, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
     if (_config.netrc_file) {
