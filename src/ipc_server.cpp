@@ -183,7 +183,14 @@ void IpcServer::on_new_connection(uv_stream_t* server_stream, int status)
     uint8_t id_len = static_cast<uint8_t>(std::min(identity.size(), MAX_MSG_LEN));
     greeting.push_back(id_len);
     greeting.insert(greeting.end(), identity.begin(), identity.begin() + id_len);
-    greeting.push_back(0); // diag_num = 0
+    const auto& diags = server->_config.diagnostics;
+    uint8_t diag_num = static_cast<uint8_t>(std::min(diags.size(), size_t{255}));
+    greeting.push_back(diag_num);
+    for (uint8_t i = 0; i < diag_num; ++i) {
+      uint8_t msg_len = static_cast<uint8_t>(std::min(diags[i].size(), MAX_MSG_LEN));
+      greeting.push_back(msg_len);
+      greeting.insert(greeting.end(), diags[i].begin(), diags[i].begin() + msg_len);
+    }
   }
 
   server->send_response(*client, std::move(greeting));

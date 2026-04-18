@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   authentication.
 - Logging of attributes.
 - Support for CRSH greeting message format 2.
+- Sending of config errors/warnings to ccache.
 
 ### Changed
 

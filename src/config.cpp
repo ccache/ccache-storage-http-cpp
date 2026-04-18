@@ -115,14 +115,6 @@ std::optional<Config> parse_config()
 
     if (key_str == "bearer-token") {
       config.bearer_token = value_str;
-    } else if (key_str == "layout") {
-      auto layout = parse_layout(value_str);
-      if (layout) {
-        config.layout = *layout;
-      } else {
-        LOG("Unknown layout: " + value_str);
-        config.layout = UrlLayout::SUBDIRS;
-      }
     } else if (key_str == "header") {
       size_t eq_pos = value_str.find('=');
       if (eq_pos != std::string::npos) {
@@ -130,7 +122,14 @@ std::optional<Config> parse_config()
         std::string header_value = value_str.substr(eq_pos + 1);
         config.headers.emplace_back(header_name, header_value);
       } else {
-        LOG("Invalid header without equal sign: " + value_str);
+        config.diagnostics.push_back("error: invalid header (no \"=\"): " + value_str);
+      }
+    } else if (key_str == "layout") {
+      auto layout = parse_layout(value_str);
+      if (layout) {
+        config.layout = *layout;
+      } else {
+        config.diagnostics.push_back("error: unknown layout: " + value_str);
       }
     } else if (key_str == "use-netrc") {
       config.use_netrc = (value_str == "true");
@@ -138,8 +137,12 @@ std::optional<Config> parse_config()
       config.use_netrc = true;
       config.netrc_file = value_str;
     } else {
-      LOG("Unknown attribute: " + key_str);
+      config.diagnostics.push_back("warning: unknown attribute: " + key_str);
     }
+  }
+
+  for (const auto& diag : config.diagnostics) {
+    LOG(diag);
   }
 
   return config;

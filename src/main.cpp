@@ -38,25 +38,25 @@ int main()
 
   auto config = parse_config();
   if (!config) {
-    LOG("Failed to parse configuration");
+    LOG("Error: failed to parse configuration");
     return 1;
   }
 
   uv_loop_t* loop = uv_default_loop();
   if (!loop) {
-    LOG("Failed to create event loop");
+    LOG("Error: failed to create event loop");
     return 1;
   }
 
   StorageClient storage_client(*loop, *config);
   if (!storage_client.init()) {
-    LOG("Failed to initialize storage client");
+    LOG("Error: failed to initialize storage client");
     return 1;
   }
 
   IpcServer ipc_server(*loop, *config, storage_client);
   if (!ipc_server.init()) {
-    LOG("Failed to initialize IPC server");
+    LOG("Error: failed to initialize IPC server");
     return 1;
   }
 

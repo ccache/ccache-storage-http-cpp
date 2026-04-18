@@ -26,6 +26,8 @@ struct Config
   unsigned int idle_timeout_seconds = 0;
   uint8_t format_max = 1;
 
+  std::vector<std::string> diagnostics;
+
   // Attributes from CRSH_ATTR_*
   std::optional<std::string> bearer_token;
   UrlLayout layout = UrlLayout::SUBDIRS;
