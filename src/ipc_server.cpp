@@ -4,6 +4,7 @@
 #include "ipc_server.hpp"
 
 #include "logger.hpp"
+#include "version.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -17,7 +18,8 @@
 
 namespace {
 
-constexpr uint8_t PROTOCOL_VERSION = 0x01;
+constexpr uint8_t GREETING_FORMAT_MIN = 0x01;
+constexpr uint8_t GREETING_FORMAT_MAX_SUPPORTED = 0x02;
 constexpr uint8_t CAP_GET_PUT_REMOVE_STOP = 0x00;
 
 constexpr uint8_t STATUS_OK = 0x00;
@@ -161,8 +163,29 @@ void IpcServer::on_new_connection(uv_stream_t* server_stream, int status)
 
   LOG("Client connected");
 
-  // Send greeting: version(u8) + num_capabilities(u8) + capabilities...
-  std::vector<uint8_t> greeting = {PROTOCOL_VERSION, 1, CAP_GET_PUT_REMOVE_STOP};
+  // Determine greeting format: use the highest format supported by both sides.
+  uint8_t client_max = server->_config.format_max;
+  if (client_max < GREETING_FORMAT_MIN) {
+    LOG("Client CRSH_FORMAT_MAX (" + std::to_string(client_max)
+        + ") is below server minimum, closing connection");
+    close_client(*client);
+    return;
+  }
+  uint8_t format = std::min(GREETING_FORMAT_MAX_SUPPORTED, client_max);
+
+  std::vector<uint8_t> greeting;
+  greeting.push_back(format);
+  greeting.push_back(1); // num capabilities
+  greeting.push_back(CAP_GET_PUT_REMOVE_STOP);
+
+  if (format >= 2) {
+    std::string identity = std::string("ccache-storage-http-cpp ") + PROJECT_VERSION;
+    uint8_t id_len = static_cast<uint8_t>(std::min(identity.size(), MAX_MSG_LEN));
+    greeting.push_back(id_len);
+    greeting.insert(greeting.end(), identity.begin(), identity.begin() + id_len);
+    greeting.push_back(0); // diag_num = 0
+  }
+
   server->send_response(*client, std::move(greeting));
 
   r = uv_read_start(reinterpret_cast<uv_stream_t*>(&client->handle), alloc_buffer, on_client_read);

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Support for [netrc](https://everything.curl.dev/usingcurl/netrc.html)
   authentication.
 - Logging of attributes.
+- Support for CRSH greeting message format 2.
 
 ### Changed
 

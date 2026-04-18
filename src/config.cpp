@@ -69,6 +69,19 @@ std::optional<Config> parse_config()
   config.idle_timeout_seconds = *idle_val;
   LOG("Idle timeout: " + std::to_string(config.idle_timeout_seconds));
 
+  const char* format_max_str = std::getenv("CRSH_FORMAT_MAX");
+  if (!format_max_str || format_max_str[0] == '\0') {
+    config.format_max = 1;
+  } else {
+    auto format_max_val = parse_int<uint8_t>(format_max_str);
+    if (!format_max_val || *format_max_val == 0) {
+      LOG("CRSH_FORMAT_MAX must be between 1 and 255");
+      return std::nullopt;
+    }
+    config.format_max = *format_max_val;
+  }
+  LOG("Format max: " + std::to_string(config.format_max));
+
   const char* num_attr_str = std::getenv("CRSH_NUM_ATTR");
   if (!num_attr_str || num_attr_str[0] == '\0') {
     num_attr_str = "0";
