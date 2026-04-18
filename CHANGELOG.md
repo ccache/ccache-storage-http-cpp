@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   authentication.
 - Logging of attributes.
 
+### Changed
+
+- Improve logging of attribute parse errors.
+
 ### Fixed
 
 - Installation of ccache-storage-https.exe on Windows.

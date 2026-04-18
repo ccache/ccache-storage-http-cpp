@@ -20,14 +20,16 @@ template<typename T> std::optional<T> parse_int(std::string_view str, int base =
   return std::nullopt;
 }
 
-static UrlLayout parse_layout(const std::string& str)
+static std::optional<UrlLayout> parse_layout(const std::string& str)
 {
   if (str == "bazel") {
     return UrlLayout::BAZEL;
   } else if (str == "flat") {
     return UrlLayout::FLAT;
+  } else if (str == "subdirs") {
+    return UrlLayout::SUBDIRS;
   } else {
-    return UrlLayout::SUBDIRS; // Default
+    return std::nullopt;
   }
 }
 
@@ -101,19 +103,29 @@ std::optional<Config> parse_config()
     if (key_str == "bearer-token") {
       config.bearer_token = value_str;
     } else if (key_str == "layout") {
-      config.layout = parse_layout(value_str);
+      auto layout = parse_layout(value_str);
+      if (layout) {
+        config.layout = *layout;
+      } else {
+        LOG("Unknown layout: " + value_str);
+        config.layout = UrlLayout::SUBDIRS;
+      }
     } else if (key_str == "header") {
       size_t eq_pos = value_str.find('=');
       if (eq_pos != std::string::npos) {
         std::string header_name = value_str.substr(0, eq_pos);
         std::string header_value = value_str.substr(eq_pos + 1);
         config.headers.emplace_back(header_name, header_value);
+      } else {
+        LOG("Invalid header without equal sign: " + value_str);
       }
     } else if (key_str == "use-netrc") {
       config.use_netrc = (value_str == "true");
     } else if (key_str == "netrc-file") {
       config.use_netrc = true;
       config.netrc_file = value_str;
+    } else {
+      LOG("Unknown attribute: " + key_str);
     }
   }
 
