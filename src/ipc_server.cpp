@@ -155,7 +155,7 @@ void IpcServer::on_new_connection(uv_stream_t* server_stream, int status)
   r = uv_accept(server_stream, reinterpret_cast<uv_stream_t*>(&client->handle));
   if (r != 0) {
     LOG("Failed to accept connection: " + std::string(uv_strerror(r)));
-    uv_close(reinterpret_cast<uv_handle_t*>(&client->handle), on_close);
+    close_client(*client);
     return;
   }
 
@@ -168,7 +168,7 @@ void IpcServer::on_new_connection(uv_stream_t* server_stream, int status)
   r = uv_read_start(reinterpret_cast<uv_stream_t*>(&client->handle), alloc_buffer, on_client_read);
   if (r != 0) {
     LOG("Failed to start reading: " + std::string(uv_strerror(r)));
-    uv_close(reinterpret_cast<uv_handle_t*>(&client->handle), on_close);
+    close_client(*client);
   }
 }
 
@@ -192,7 +192,7 @@ void IpcServer::on_client_read(uv_stream_t* stream, ssize_t nread, const uv_buf_
     if (nread != UV_EOF) {
       LOG("Read error: " + std::string(uv_strerror(static_cast<int>(nread))));
     }
-    uv_close(reinterpret_cast<uv_handle_t*>(stream), on_close);
+    close_client(*static_cast<ClientConnection*>(stream->data));
   }
 }
 
@@ -273,12 +273,13 @@ void IpcServer::process_client_data(ClientConnection& client)
       LOG("PUT request for key " + hex_key + " (" + std::to_string(value.size()) + " bytes)");
 
       auto client_ptr = client.shared_from_this();
-      _storage_client.put(hex_key, std::move(value), overwrite, [this, client_ptr](StorageResponse&& response) {
-        if (client_ptr->disconnected) {
-          return;
-        }
-        send_simple_response(*client_ptr, "PUT", response);
-      });
+      _storage_client.put(
+        hex_key, std::move(value), overwrite, [this, client_ptr](StorageResponse&& response) {
+          if (client_ptr->disconnected) {
+            return;
+          }
+          send_simple_response(*client_ptr, "PUT", response);
+        });
       break;
     }
 
@@ -322,8 +323,23 @@ void IpcServer::send_simple_response(ClientConnection& client,
   }
 }
 
+void IpcServer::close_client(ClientConnection& client)
+{
+  client.disconnected = true;
+
+  auto* handle = reinterpret_cast<uv_handle_t*>(&client.handle);
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, on_close);
+  }
+}
+
 void IpcServer::flush_write_queue(ClientConnection& client)
 {
+  if (client.disconnected || uv_is_closing(reinterpret_cast<uv_handle_t*>(&client.handle))) {
+    client.write_queue.clear();
+    return;
+  }
+
   if (client.writing || client.write_queue.empty()) {
     return;
   }
@@ -366,7 +382,6 @@ void IpcServer::on_close(uv_handle_t* handle)
 {
   LOG("Client disconnected");
   auto* client = static_cast<ClientConnection*>(handle->data);
-  client->disconnected = true;
   // Remove from _clients map; shared_ptr prevent premature deletion
   // if callbacks are still pending
   client->server->_clients.erase(reinterpret_cast<uv_pipe_t*>(handle));
