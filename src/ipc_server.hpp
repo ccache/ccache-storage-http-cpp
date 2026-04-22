@@ -11,17 +11,19 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 class IpcServer;
 
-struct ClientConnection
+struct ClientConnection : public std::enable_shared_from_this<ClientConnection>
 {
   uv_pipe_t handle;
   IpcServer* server;
   std::vector<uint8_t> read_buf;
   std::vector<char> alloc_buf; // Reusable buffer for libuv reads
   bool writing = false;
+  bool disconnected = false; // Set when client disconnects, prevents sending to closed pipe
   std::vector<std::vector<uint8_t>> write_queue;
 };
 
@@ -59,4 +61,5 @@ private:
   StorageClient& _storage_client;
   uv_pipe_t _server_pipe;
   uv_timer_t _idle_timer;
+  std::unordered_map<uv_pipe_t*, std::shared_ptr<ClientConnection>> _clients;
 };
