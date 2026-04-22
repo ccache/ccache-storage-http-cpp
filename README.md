@@ -33,6 +33,7 @@ production ready) **Go** implementation.
 - Bearer token authentication support
 - Support for custom HTTP headers
 - Optional debug logging
+- [netrc](https://everything.curl.dev/usingcurl/netrc.html) support
 
 ## Installation
 
