@@ -11,6 +11,7 @@
 ### Fixed
 
 - Installation of ccache-storage-https.exe on Windows.
+- Use-after-free in IPC client connection lifetime management.
 
 ## [0.5] - 2026-03-18
 
