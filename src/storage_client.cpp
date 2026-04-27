@@ -6,8 +6,10 @@
 #include "logger.hpp"
 #include "version.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <thread>
 
 namespace {
 
@@ -90,12 +92,13 @@ bool StorageClient::init()
     return false;
   }
 
+  long connection_pool_size = std::max<long>(32, std::thread::hardware_concurrency());
   curl_multi_setopt(_multi_handle, CURLMOPT_SOCKETFUNCTION, socket_callback);
   curl_multi_setopt(_multi_handle, CURLMOPT_SOCKETDATA, this);
   curl_multi_setopt(_multi_handle, CURLMOPT_TIMERFUNCTION, timer_callback);
   curl_multi_setopt(_multi_handle, CURLMOPT_TIMERDATA, this);
-  curl_multi_setopt(_multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, 16L);
-  curl_multi_setopt(_multi_handle, CURLMOPT_MAXCONNECTS, 16L);
+  curl_multi_setopt(_multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, connection_pool_size);
+  curl_multi_setopt(_multi_handle, CURLMOPT_MAXCONNECTS, connection_pool_size);
 
   uv_timer_init(&_loop, &_timeout_timer);
   _timeout_timer.data = this;
