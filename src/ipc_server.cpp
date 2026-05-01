@@ -297,19 +297,31 @@ void IpcServer::process_client_data(ClientConnection& client)
         return; // incomplete message
       }
 
-      std::vector<uint8_t> value(data + offset, data + offset + value_len);
-      offset += value_len;
+      // buf now contains the header and the full value, and might (in theory
+      // but not in practice) also include excess bytes written by the client.
+      // To avoid copying the potentially large payload, hand over the full
+      // buffer to the storage client.
+      size_t excess_bytes = len - offset - value_len;
+      DataSlice put_data;
+      buf.swap(put_data.storage);
+      put_data.offset = offset;
+      put_data.size = value_len;
+      buf.insert(buf.begin(),
+                 data + offset + value_len,
+                 data + offset + value_len + excess_bytes); // retain excess bytes
+
       bool overwrite = (flags & PUT_FLAG_OVERWRITE) != 0;
-      LOG("PUT request for key " + hex_key + " (" + std::to_string(value.size()) + " bytes)");
+      LOG("PUT request for key " + hex_key + " (" + std::to_string(value_len) + " bytes)");
 
       auto client_ptr = client.shared_from_this();
       _storage_client.put(
-        hex_key, std::move(value), overwrite, [this, client_ptr](StorageResponse&& response) {
+        hex_key, std::move(put_data), overwrite, [this, client_ptr](StorageResponse&& response) {
           if (client_ptr->disconnected) {
             return;
           }
           send_simple_response(*client_ptr, "PUT", response);
         });
+      offset = 0; // we have adjusted buf ourselves
       break;
     }
 

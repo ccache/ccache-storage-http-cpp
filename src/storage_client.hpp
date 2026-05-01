@@ -29,11 +29,18 @@ using StorageCallback = std::function<void(StorageResponse&&)>;
 #undef DELETE // needed on Windows
 enum class HttpOperation { GET, PUT, DELETE, HEAD };
 
+struct DataSlice
+{
+  std::vector<uint8_t> storage;
+  size_t offset = 0;
+  size_t size = 0;
+};
+
 struct HttpRequest
 {
   HttpOperation operation;
   std::string url;
-  std::vector<uint8_t> request_data; // For PUT
+  DataSlice request_data; // For PUT
   std::vector<uint8_t> response_data;
   StorageCallback callback;
   struct curl_slist* headers = nullptr;
@@ -59,14 +66,12 @@ public:
   bool init();
 
   void get(const std::string& hex_key, StorageCallback&& callback);
-  void put(const std::string& hex_key,
-           std::vector<uint8_t>&& data,
-           bool overwrite,
-           StorageCallback&& callback);
+  void
+  put(const std::string& hex_key, DataSlice&& data, bool overwrite, StorageCallback&& callback);
   void remove(const std::string& hex_key, StorageCallback&& callback);
 
 private:
-  void do_put(const std::string& hex_key, std::vector<uint8_t>&& data, StorageCallback&& callback);
+  void do_put(const std::string& hex_key, DataSlice&& data, StorageCallback&& callback);
   void check_multi_info();
 
   CURL* create_easy_handle(HttpRequest* request);
