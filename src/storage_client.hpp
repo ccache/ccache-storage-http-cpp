@@ -43,6 +43,7 @@ struct HttpRequest
   DataSlice request_data; // For PUT
   std::vector<uint8_t> response_data;
   StorageCallback callback;
+  CURL* easy_handle = nullptr;
   struct curl_slist* headers = nullptr;
   char error_buf[CURL_ERROR_SIZE] = {0};
   size_t upload_pos = 0;

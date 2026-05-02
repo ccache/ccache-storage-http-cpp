@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <limits>
 #include <sstream>
 #include <thread>
 
@@ -216,6 +217,8 @@ CURL* StorageClient::create_easy_handle(HttpRequest* request)
   if (!handle) {
     return nullptr;
   }
+
+  request->easy_handle = handle;
 
   curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, request->error_buf);
   curl_easy_setopt(handle, CURLOPT_EXPECT_100_TIMEOUT_MS, 0L);
@@ -448,6 +451,17 @@ void StorageClient::on_poll(uv_poll_t* handle, int status, int events)
 size_t StorageClient::write_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 {
   HttpRequest* request = static_cast<HttpRequest*>(userdata);
+
+  if (request->response_data.capacity() == 0 && request->operation == HttpOperation::GET) {
+    curl_off_t content_length = -1;
+    CURLcode result =
+      curl_easy_getinfo(request->easy_handle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_length);
+    if (result == CURLE_OK && content_length > 0
+        && static_cast<uint64_t>(content_length) <= std::numeric_limits<size_t>::max()) {
+      request->response_data.reserve(static_cast<size_t>(content_length));
+    }
+  }
+
   size_t total = size * nmemb;
   request->response_data.insert(request->response_data.end(), ptr, ptr + total);
   return total;
