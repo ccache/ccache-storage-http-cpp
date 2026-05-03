@@ -4,6 +4,8 @@ string(STRIP "${PROJECT_VERSION_RAW}" PROJECT_VERSION)
 cmake_minimum_required(VERSION 3.16)
 project(ccache-storage-http-cpp VERSION "${PROJECT_VERSION}" LANGUAGES CXX)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -72,4 +74,14 @@ find_program(CLANG_FORMAT clang-format)
 if(CLANG_FORMAT)
   file(GLOB_RECURSE ALL_SOURCE_FILES src/*.cpp src/*.hpp)
   add_custom_target(clang-format COMMAND ${CLANG_FORMAT} -i ${ALL_SOURCE_FILES} COMMENT "Running clang-format on all source files" VERBATIM)
+endif()
+
+if(NOT WIN32)
+  add_test(
+    NAME integration
+    COMMAND
+      "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_storage_helper"
+      --binary
+      "$<TARGET_FILE:ccache-storage-http>"
+  )
 endif()

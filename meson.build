@@ -44,3 +44,11 @@ else
     install_dir: get_option('bindir'),
   )
 endif
+
+if host_machine.system() != 'windows'
+  test(
+    'integration',
+    find_program('tests/integration/test_storage_helper'),
+    args: ['--binary', ccache_storage_http.full_path()],
+  )
+endif
