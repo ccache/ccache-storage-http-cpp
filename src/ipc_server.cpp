@@ -360,7 +360,7 @@ void IpcServer::send_simple_response(ClientConnection& client,
     uint8_t msg_len = std::min(response.error.size(), MAX_MSG_LEN);
     err_resp.push_back(msg_len);
     err_resp.insert(err_resp.end(), response.error.begin(), response.error.begin() + msg_len);
-    send_response(client, err_resp);
+    send_response(client, std::move(err_resp));
     break;
   }
 }
