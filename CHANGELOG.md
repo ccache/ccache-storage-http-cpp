@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improve connection pool size.
 - Avoid an extra copy of PUT payloads.
 - Preallocate response buffer for GET requests.
+- Increase uv_listen backlog to 4096.
 
 ## [0.6] - 2026-04-22
 

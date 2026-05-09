@@ -90,7 +90,7 @@ bool IpcServer::init()
     return false;
   }
 
-  r = uv_listen(reinterpret_cast<uv_stream_t*>(&_server_pipe), 128, on_new_connection);
+  r = uv_listen(reinterpret_cast<uv_stream_t*>(&_server_pipe), 4096, on_new_connection);
   if (r != 0) {
     LOG("Failed to listen on IPC endpoint: " + std::string(uv_strerror(r)));
     return false;
