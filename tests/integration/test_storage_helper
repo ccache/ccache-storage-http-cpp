@@ -48,10 +48,8 @@ class RecordedRequest:
 
 @dataclass
 class Greeting:
-    format: int
+    protocol_version: int
     capabilities: bytes
-    identity: str | None = None
-    diagnostics: list[str] = field(default_factory=list)
 
 
 class ThreadingHttpServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
@@ -130,10 +128,9 @@ class StubHttpServer:
 
 
 class HelperProcess:
-    def __init__(self, binary: Path, base_url: str, *, format_max: int | None = None):
+    def __init__(self, binary: Path, base_url: str):
         self._binary = str(binary)
         self._base_url = base_url
-        self._format_max = format_max
         self._tmpdir = Path(tempfile.mkdtemp(prefix="crsh-it-", dir="/tmp"))
         self._socket_path = self._tmpdir / "helper.sock"
         self._log_path = self._tmpdir / "helper.log"
@@ -152,8 +149,6 @@ class HelperProcess:
             "CRSH_ATTR_VALUE_0": "flat",
             "CRSH_LOGFILE": str(self._log_path),
         }
-        if self._format_max is not None:
-            env["CRSH_FORMAT_MAX"] = str(self._format_max)
 
         self._process = subprocess.Popen(
             [self._binary],
@@ -196,9 +191,8 @@ class HelperProcess:
                 time.sleep(0.05)
 
         self.greeting = self._read_greeting()
-        expected_format = 1 if self._format_max is None else self._format_max
-        if self.greeting.format != expected_format:
-            raise AssertionError(f"unexpected greeting format: {self.greeting!r}")
+        if self.greeting.protocol_version != 1:
+            raise AssertionError("protocol version != 1")
         return self
 
     def __exit__(self, exc_type, exc, tb):
@@ -279,19 +273,9 @@ class HelperProcess:
         return self._recv_exact(size).decode("utf-8")
 
     def _read_greeting(self) -> Greeting:
-        format_version, num_capabilities = self._recv_exact(2)
+        protocol_version, num_capabilities = self._recv_exact(2)
         capabilities = self._recv_exact(num_capabilities)
-        greeting = Greeting(format=format_version, capabilities=capabilities)
-        if format_version >= 2:
-            identity_size = self._recv_exact(1)[0]
-            greeting.identity = self._recv_exact(identity_size).decode("utf-8")
-            num_diagnostics = self._recv_exact(1)[0]
-            for _ in range(num_diagnostics):
-                message_size = self._recv_exact(1)[0]
-                greeting.diagnostics.append(
-                    self._recv_exact(message_size).decode("utf-8")
-                )
-        return greeting
+        return Greeting(protocol_version=protocol_version, capabilities=capabilities)
 
     def _failure_details(self, message: str) -> str:
         details = [message]
@@ -313,30 +297,6 @@ class HelperProcess:
 
 @unittest.skipIf(os.name == "nt", "requires Unix domain sockets")
 class StorageHelperIntegrationTest(unittest.TestCase):
-    def test_helper_accepts_default_greeting_when_format_is_unset(self):
-        with (
-            StubHttpServer({}) as server,
-            HelperProcess(BINARY_PATH, server.base_url) as helper,
-        ):
-            self.assertIsNotNone(helper.greeting)
-            self.assertEqual(helper.greeting.format, 1)
-            self.assertEqual(helper.greeting.capabilities, bytes((0,)))
-            self.assertIsNone(helper.greeting.identity)
-            self.assertEqual(helper.greeting.diagnostics, [])
-
-    def test_helper_accepts_format_2_greeting(self):
-        with (
-            StubHttpServer({}) as server,
-            HelperProcess(BINARY_PATH, server.base_url, format_max=2) as helper,
-        ):
-            self.assertIsNotNone(helper.greeting)
-            self.assertEqual(helper.greeting.format, 2)
-            self.assertEqual(helper.greeting.capabilities, bytes((0,)))
-            self.assertTrue(
-                helper.greeting.identity.startswith("ccache-storage-http-cpp ")
-            )
-            self.assertEqual(helper.greeting.diagnostics, [])
-
     def test_get_with_content_length(self):
         with (
             StubHttpServer(
