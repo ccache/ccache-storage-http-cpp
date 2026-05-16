@@ -107,6 +107,26 @@ bool StorageClient::init()
   return true;
 }
 
+void StorageClient::exists(const std::string& hex_key, StorageCallback&& callback)
+{
+  auto request = std::make_unique<HttpRequest>();
+  request->operation = HttpOperation::HEAD;
+  request->url = build_url(_config, hex_key);
+  request->callback = std::move(callback);
+
+  LOG("HEAD " + request->url);
+
+  CURL* handle = create_easy_handle(request.get());
+  if (!handle) {
+    request->callback(StorageResponse{StorageResult::ERROR, "Failed to create curl handle", {}});
+    return;
+  }
+
+  curl_easy_setopt(handle, CURLOPT_NOBODY, 1L);
+  _active_requests[handle] = std::move(request);
+  curl_multi_add_handle(_multi_handle, handle);
+}
+
 void StorageClient::get(const std::string& hex_key, StorageCallback&& callback)
 {
   auto request = std::make_unique<HttpRequest>();

@@ -66,6 +66,7 @@ public:
 
   bool init();
 
+  void exists(const std::string& hex_key, StorageCallback&& callback);
   void get(const std::string& hex_key, StorageCallback&& callback);
   void
   put(const std::string& hex_key, DataSlice&& data, bool overwrite, StorageCallback&& callback);

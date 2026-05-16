@@ -21,6 +21,7 @@ namespace {
 constexpr uint8_t PROTOCOL_VERSION = 0x01;
 constexpr uint8_t CAP_GET_PUT_REMOVE = 0x00;
 constexpr uint8_t CAP_INFO = 0x01;
+constexpr uint8_t CAP_EXISTS = 0x02;
 
 constexpr uint8_t STATUS_OK = 0x00;
 constexpr uint8_t STATUS_NOOP = 0x01;
@@ -31,6 +32,7 @@ constexpr uint8_t REQ_PUT = 0x01;
 constexpr uint8_t REQ_REMOVE = 0x02;
 constexpr uint8_t REQ_STOP = 0x03;
 constexpr uint8_t REQ_INFO = 0x04;
+constexpr uint8_t REQ_EXISTS = 0x05;
 
 constexpr uint8_t PUT_FLAG_OVERWRITE = 0x01;
 constexpr size_t MAX_MSG_LEN = 255;
@@ -165,7 +167,7 @@ void IpcServer::on_new_connection(uv_stream_t* server_stream, int status)
   LOG("Client connected");
 
   // Send greeting: version(u8) + num_capabilities(u8) + capabilities...
-  std::vector<uint8_t> greeting = {PROTOCOL_VERSION, 2, CAP_GET_PUT_REMOVE, CAP_INFO};
+  std::vector<uint8_t> greeting = {PROTOCOL_VERSION, 3, CAP_GET_PUT_REMOVE, CAP_INFO, CAP_EXISTS};
   server->send_response(*client, std::move(greeting));
 
   r = uv_read_start(reinterpret_cast<uv_stream_t*>(&client->handle), alloc_buffer, on_client_read);
@@ -224,6 +226,32 @@ void IpcServer::process_client_data(ClientConnection& client)
     };
 
     switch (request_type) {
+    case REQ_EXISTS: {
+      if (!parse_key()) {
+        return;
+      }
+      LOG("EXISTS request for key " + hex_key);
+      auto client_ptr = client.shared_from_this();
+      _storage_client.exists(hex_key, [this, client_ptr](StorageResponse&& response) {
+        if (client_ptr->disconnected) {
+          return;
+        }
+        if (response.result == StorageResult::ERROR) {
+          LOG("EXISTS failed: " + response.error);
+          std::vector<uint8_t> err_resp;
+          err_resp.push_back(STATUS_ERR);
+          uint8_t msg_len = static_cast<uint8_t>(std::min(response.error.size(), MAX_MSG_LEN));
+          err_resp.push_back(msg_len);
+          err_resp.insert(err_resp.end(), response.error.begin(), response.error.begin() + msg_len);
+          send_response(*client_ptr, std::move(err_resp));
+        } else {
+          uint8_t exists = (response.result == StorageResult::OK) ? 0x01 : 0x00;
+          send_response(*client_ptr, std::vector<uint8_t>{STATUS_OK, exists});
+        }
+      });
+      break;
+    }
+
     case REQ_INFO: {
       buf.erase(buf.begin(), buf.begin() + offset);
       LOG("INFO request");

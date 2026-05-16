@@ -24,6 +24,7 @@ REQ_GET = 0x00
 REQ_PUT = 0x01
 REQ_STOP = 0x03
 REQ_INFO = 0x04
+REQ_EXISTS = 0x05
 
 PUT_FLAG_OVERWRITE = 0x01
 
@@ -229,6 +230,16 @@ class HelperProcess:
             shutil.rmtree(self._tmpdir, ignore_errors=True)
         return False
 
+    def exists(self, hex_key: str):
+        key = bytes.fromhex(hex_key)
+        self._socket.sendall(bytes((REQ_EXISTS, len(key))) + key)
+        status = self._recv_exact(1)[0]
+        if status == STATUS_OK:
+            return (status, bool(self._recv_exact(1)[0]))
+        if status == STATUS_ERR:
+            return (status, self._read_error_message())
+        raise AssertionError(f"unexpected EXISTS status: {status}")
+
     def get(self, hex_key: str):
         key = bytes.fromhex(hex_key)
         self._socket.sendall(bytes((REQ_GET, len(key))) + key)
@@ -415,6 +426,34 @@ class StorageHelperIntegrationTest(unittest.TestCase):
         self.assertEqual(
             [(request.method, request.path) for request in server.requests],
             [("GET", "/dead")],
+        )
+
+    def test_exists_returns_true_when_key_exists(self):
+        with (
+            StubHttpServer({("HEAD", "/babe"): ResponseSpec(status=200)}) as server,
+            HelperProcess(BINARY_PATH, server.base_url) as helper,
+        ):
+            status, exists = helper.exists("babe")
+
+        self.assertEqual(status, STATUS_OK)
+        self.assertTrue(exists)
+        self.assertEqual(
+            [(request.method, request.path) for request in server.requests],
+            [("HEAD", "/babe")],
+        )
+
+    def test_exists_returns_false_when_key_is_missing(self):
+        with (
+            StubHttpServer({}) as server,
+            HelperProcess(BINARY_PATH, server.base_url) as helper,
+        ):
+            status, exists = helper.exists("feed")
+
+        self.assertEqual(status, STATUS_OK)
+        self.assertFalse(exists)
+        self.assertEqual(
+            [(request.method, request.path) for request in server.requests],
+            [("HEAD", "/feed")],
         )
 
     def test_put_overwrite_sends_body(self):
