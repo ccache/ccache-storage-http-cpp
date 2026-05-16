@@ -23,8 +23,12 @@ STATUS_ERR = 0x02
 REQ_GET = 0x00
 REQ_PUT = 0x01
 REQ_STOP = 0x03
+REQ_INFO = 0x04
 
 PUT_FLAG_OVERWRITE = 0x01
+
+VERSION_FILE = Path(__file__).resolve().parents[2] / "version.txt"
+PROJECT_VERSION = VERSION_FILE.read_text(encoding="utf-8").strip()
 
 HOST_U64 = struct.Struct("=Q")
 BINARY_PATH: Path | None = None
@@ -128,9 +132,16 @@ class StubHttpServer:
 
 
 class HelperProcess:
-    def __init__(self, binary: Path, base_url: str):
+    def __init__(
+        self,
+        binary: Path,
+        base_url: str,
+        *,
+        attrs: list[tuple[str, str]] | None = None,
+    ):
         self._binary = str(binary)
         self._base_url = base_url
+        self._attrs = [("layout", "flat")] if attrs is None else attrs
         self._tmpdir = Path(tempfile.mkdtemp(prefix="crsh-it-", dir="/tmp"))
         self._socket_path = self._tmpdir / "helper.sock"
         self._log_path = self._tmpdir / "helper.log"
@@ -144,11 +155,12 @@ class HelperProcess:
             "CRSH_IPC_ENDPOINT": str(self._socket_path),
             "CRSH_URL": self._base_url,
             "CRSH_IDLE_TIMEOUT": "30",
-            "CRSH_NUM_ATTR": "1",
-            "CRSH_ATTR_KEY_0": "layout",
-            "CRSH_ATTR_VALUE_0": "flat",
+            "CRSH_NUM_ATTR": str(len(self._attrs)),
             "CRSH_LOGFILE": str(self._log_path),
         }
+        for index, (key, value) in enumerate(self._attrs):
+            env[f"CRSH_ATTR_KEY_{index}"] = key
+            env[f"CRSH_ATTR_VALUE_{index}"] = value
 
         self._process = subprocess.Popen(
             [self._binary],
@@ -249,6 +261,12 @@ class HelperProcess:
             return (status, None)
         raise AssertionError(f"unexpected PUT status: {status}")
 
+    def info(self):
+        self._socket.sendall(bytes((REQ_INFO,)))
+        identity = self._read_message()
+        diagnostics = [self._read_message() for _ in range(self._recv_exact(1)[0])]
+        return (identity, diagnostics)
+
     def stop(self):
         if self._socket is None:
             return
@@ -268,9 +286,12 @@ class HelperProcess:
             buf.extend(chunk)
         return bytes(buf)
 
-    def _read_error_message(self) -> str:
+    def _read_message(self) -> str:
         size = self._recv_exact(1)[0]
         return self._recv_exact(size).decode("utf-8")
+
+    def _read_error_message(self) -> str:
+        return self._read_message()
 
     def _read_greeting(self) -> Greeting:
         protocol_version, num_capabilities = self._recv_exact(2)
@@ -297,6 +318,42 @@ class HelperProcess:
 
 @unittest.skipIf(os.name == "nt", "requires Unix domain sockets")
 class StorageHelperIntegrationTest(unittest.TestCase):
+    def test_info_returns_identity_and_no_diagnostics(self):
+        with (
+            StubHttpServer({}) as server,
+            HelperProcess(BINARY_PATH, server.base_url) as helper,
+        ):
+            identity, diagnostics = helper.info()
+
+        self.assertEqual(identity, f"ccache-storage-http-cpp {PROJECT_VERSION}")
+        self.assertEqual(diagnostics, [])
+        self.assertEqual(server.requests, [])
+
+    def test_info_returns_diagnostics(self):
+        with (
+            StubHttpServer({}) as server,
+            HelperProcess(
+                BINARY_PATH,
+                server.base_url,
+                attrs=[
+                    ("layout", "flat"),
+                    ("mystery-attr", "value"),
+                    ("header", "broken-header"),
+                ],
+            ) as helper,
+        ):
+            identity, diagnostics = helper.info()
+
+        self.assertEqual(identity, f"ccache-storage-http-cpp {PROJECT_VERSION}")
+        self.assertEqual(
+            diagnostics,
+            [
+                "warning: unknown attribute: mystery-attr",
+                'error: invalid header (no "="): broken-header',
+            ],
+        )
+        self.assertEqual(server.requests, [])
+
     def test_get_with_content_length(self):
         with (
             StubHttpServer(
