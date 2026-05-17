@@ -273,13 +273,6 @@ void IpcServer::process_client_data(ClientConnection& client)
       return;
     }
 
-    case REQ_STOP:
-      buf.erase(buf.begin(), buf.begin() + offset);
-      LOG("STOP request received");
-      send_response(client, std::vector<uint8_t>{STATUS_OK});
-      stop();
-      return;
-
     case REQ_GET: {
       if (!parse_key()) {
         return;
@@ -364,6 +357,13 @@ void IpcServer::process_client_data(ClientConnection& client)
       });
       break;
     }
+
+    case REQ_STOP:
+      buf.erase(buf.begin(), buf.begin() + offset);
+      LOG("STOP request received");
+      send_response(client, std::vector<uint8_t>{STATUS_OK});
+      stop();
+      return;
 
     default:
       LOG("Unknown request type: " + std::to_string(request_type));
