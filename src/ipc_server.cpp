@@ -253,7 +253,6 @@ void IpcServer::process_client_data(ClientConnection& client)
     }
 
     case REQ_INFO: {
-      buf.erase(buf.begin(), buf.begin() + offset);
       LOG("INFO request");
       std::vector<uint8_t> response;
       std::string identity = std::string("ccache-storage-http-cpp ") + PROJECT_VERSION;
@@ -270,7 +269,7 @@ void IpcServer::process_client_data(ClientConnection& client)
       }
 
       send_response(*client.shared_from_this(), std::move(response));
-      return;
+      break;
     }
 
     case REQ_GET: {
@@ -359,7 +358,6 @@ void IpcServer::process_client_data(ClientConnection& client)
     }
 
     case REQ_STOP:
-      buf.erase(buf.begin(), buf.begin() + offset);
       LOG("STOP request received");
       send_response(client, std::vector<uint8_t>{STATUS_OK});
       stop();
