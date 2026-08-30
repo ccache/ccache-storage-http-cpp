@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.10] - 2026-08-30
+
+[0.10]: https://github.com/ccache/ccache-storage-http-cpp/releases/tag/v0.10
 
 ### Added
 
