@@ -122,6 +122,17 @@ std::optional<Config> parse_config()
       } else {
         config.bearer_token_file = value_str;
       }
+    } else if (key_str == "connection-pool-size") {
+      auto size = parse_int<long>(value_str);
+      if (!size) {
+        config.diagnostics.push_back("error: invalid connection pool size \"" + value_str
+                                     + "\": must be an integer");
+      } else if (*size <= 0) {
+        config.diagnostics.push_back("error: invalid connection pool size \"" + value_str
+                                     + "\": must be positive");
+      } else {
+        config.connection_pool_size = *size;
+      }
     } else if (key_str == "header") {
       size_t eq_pos = value_str.find('=');
       if (eq_pos != std::string::npos) {

@@ -141,7 +141,8 @@ bool StorageClient::init()
     return false;
   }
 
-  long connection_pool_size = std::max<long>(32, std::thread::hardware_concurrency());
+  long connection_pool_size =
+    _config.connection_pool_size.value_or(std::max<long>(32, std::thread::hardware_concurrency()));
   curl_multi_setopt(_multi_handle, CURLMOPT_SOCKETFUNCTION, socket_callback);
   curl_multi_setopt(_multi_handle, CURLMOPT_SOCKETDATA, this);
   curl_multi_setopt(_multi_handle, CURLMOPT_TIMERFUNCTION, timer_callback);
