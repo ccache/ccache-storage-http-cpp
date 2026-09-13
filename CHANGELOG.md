@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+## [0.11] - 2026-09-13
+
+[0.11]: https://github.com/ccache/ccache-storage-http-cpp/releases/tag/v0.11
+
 ### Added
 
 - New `connection-pool-size` attribute for setting the maximum number of
